@@ -49,8 +49,41 @@ def upload_private(path,title):
  print('PRIVATE upload:',response.get('id'))
 def story():
  today=datetime.datetime.now(ZoneInfo('Europe/Istanbul')).date()
- title,raw=STORIES[today.toordinal()%len(STORIES)]
- return title,raw.split('|')
+ # Built-in stories are strictly for previews, not repeated daily publication.
+ if not os.getenv('GROQ_API_KEY'):
+  if os.getenv('ENABLE_UPLOAD')=='true':
+   raise RuntimeError('GROQ_API_KEY required for original daily stories. Upload aborted.')
+  title,raw=STORIES[today.toordinal()%len(STORIES)]
+  return title,raw.split('|')
+ import requests
+ history_path=ROOT/'history.json'
+ history=json.loads(history_path.read_text()) if history_path.exists() else []
+ past=[x.get('title','') for x in history[-30:]]
+ prompt=('Türkçe, özgün ve aile dostu komik 3D kısa hikâye oluştur. Ana karakter Mırmır adlı turuncu kedi. '
+         'Bütün sahneler aynı modern ofiste geçsin; görsel olarak yalnızca kedi, masa, ekran ve ofis var. '
+         'Dört kısa anlatıcı sahnesi yaz. Her sahne 8-15 kelime, toplam 40-60 kelime. '
+         'Başta dikkat çekici olay, sonda sürpriz ve eğlenceli sonuç. '
+         'Şiddet, bahis, telifli karakter ve yetişkin içeriği olmasın. '
+         'Yalnızca JSON: {"title":"...", "scenes":["...","...","...","..."]}. '
+         'Son başlıkları tekrarlama: '+json.dumps(past,ensure_ascii=False))
+ for attempt in range(3):
+  try:
+   response=requests.post('https://api.groq.com/openai/v1/chat/completions',
+    headers={'Authorization':'Bearer '+os.environ['GROQ_API_KEY']},
+    json={'model':'openai/gpt-oss-20b',
+          'messages':[{'role':'system','content':'Yalnızca geçerli JSON üret.'},
+                      {'role':'user','content':prompt}],
+          'response_format':{'type':'json_object'},'max_completion_tokens':1000,
+          'temperature':.95},timeout=90)
+   response.raise_for_status()
+   data=json.loads(response.json()['choices'][0]['message']['content'])
+   scenes=data['scenes'];title=str(data['title'])[:75]
+   if len(scenes)!=4 or any(not 7<=len(str(x).split())<=17 for x in scenes):raise ValueError('Invalid scene structure')
+   if title.casefold() in [str(x).casefold() for x in past]:raise ValueError('Repeated title')
+   return title,[str(x) for x in scenes]
+  except Exception as exc:
+   if attempt==2:raise RuntimeError('Original story generation failed; no upload') from exc
+ raise RuntimeError('Story generation failed')
 def main():
  date=datetime.datetime.now(ZoneInfo('Europe/Istanbul')).date()
  title,scenes=story()
@@ -77,6 +110,10 @@ def main():
   print('3D preview successfully generated:',output)
   if os.getenv('ENABLE_UPLOAD')=='true' and os.getenv('GITHUB_EVENT_NAME')=='schedule':
    upload_private(output,title)
+   history_path=ROOT/'history.json'
+   previous=json.loads(history_path.read_text()) if history_path.exists() else []
+   previous.append({'date':str(date),'title':title})
+   history_path.write_text(json.dumps(previous,ensure_ascii=False,indent=2)+'\n')
 if __name__=='__main__':
  try:main()
  except Exception as e:print('Pipeline FAILED; no automatic upload:',repr(e),file=sys.stderr);raise
