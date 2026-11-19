@@ -8,7 +8,7 @@ GitHub > **Actions** > **3D Shorts on schedule (preview first)** > **Run workflo
 
 ### YouTube'a her gün otomatik gizli yükleme
 
-**Varsayılan olarak yükleme kapalıdır.** Kanal sahibinin bir defa YouTube OAuth `youtube.upload` izni verip GitHub > Settings > Secrets and variables > Actions > Secrets bölümüne şu üç gizli anahtarı eklemesi gerekir: `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`. Tokenları sohbet mesajına veya depoya koyma. Ardından aynı ekrandan **Variables** kısmına `ENABLE_UPLOAD=true` ekle.
+**Varsayılan olarak yükleme kapalıdır.** Kanal sahibinin bir defa YouTube OAuth `youtube.upload` izni verip GitHub > Settings > Secrets and variables > Actions > Secrets bölümüne şu üç gizli anahtarı eklemesi gerekir: `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN` ve ayrıca `GROQ_API_KEY` (özgün günlük senaryolar için). Tokenları sohbet mesajına veya depoya koyma. Ardından aynı ekrandan **Variables** kısmına `ENABLE_UPLOAD=true` ekle.
 
 19:17 Türkiye saati civarında zamanlanmış işler videoyu **private/gizli** olarak yüklemeye çalışır. Manuel çalışmalar yalnızca önizleme üretir. Her video için otomatik kaliteli yapay zekâ hikâye üretimi henüz entegre edilmemiştir; deneme metinleri üçlü döngüde tekrarlanır. Bu nedenle yayına sürekli geçmeden önce hikâye sistemini de tamamlamak gerekir.
 
