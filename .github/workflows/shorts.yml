@@ -1,10 +1,8 @@
 name: 3D Shorts - preview and daily
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-  schedule:
-    - cron: '17 16 * * *'
+# Paused: the current renderer does not meet the requested visual quality.
+# Manual previews only until a new generative-video pipeline is tested.
 permissions:
   contents: write
 jobs:
