@@ -1,0 +1,39 @@
+name: 3D Shorts - preview and daily
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 16 * * *'
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: System dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core libegl1 libgl1 libopengl0
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Render 3D and Turkish neural audio
+        env:
+          TTS_VOICE: tr-TR-EmelNeural
+          ENABLE_UPLOAD: ${{ vars.ENABLE_UPLOAD }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: python pipeline.py
+      - name: Upload private preview artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 3D-Shorts-Preview
+          path: preview.mp4
+          retention-days: 14
