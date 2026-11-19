@@ -1,0 +1,5 @@
+edge-tts>=7.3,<8
+Pillow>=11,<13
+vtk>=9.5,<10
+google-auth>=2.35,<3
+google-api-python-client>=2.150,<3
